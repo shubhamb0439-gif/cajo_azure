@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 
 type CurrencyMode = 'INR' | 'EUR';
 
@@ -24,19 +24,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadExchangeRate = async () => {
-    const { data } = await supabase
-      .from('foreign_exchange_rates')
-      .select('inr_per_unit')
-      .eq('currency_code', 'EUR')
-      .maybeSingle();
-
+    const { data } = await api.exchangeRates.getByCode('EUR');
     if (data) {
       setEurRate(data.inr_per_unit);
     }
   };
 
   const toggleCurrency = () => {
-    setCurrencyMode(prev => prev === 'INR' ? 'EUR' : 'INR');
+    setCurrencyMode(prev => (prev === 'INR' ? 'EUR' : 'INR'));
   };
 
   const formatAmount = (amount: number): string => {
@@ -54,15 +49,17 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const isViewOnly = currencyMode === 'EUR';
 
   return (
-    <CurrencyContext.Provider value={{
-      currencyMode,
-      eurRate,
-      isViewOnly,
-      toggleCurrency,
-      formatAmount,
-      getCurrencySymbol,
-      refreshExchangeRate: loadExchangeRate,
-    }}>
+    <CurrencyContext.Provider
+      value={{
+        currencyMode,
+        eurRate,
+        isViewOnly,
+        toggleCurrency,
+        formatAmount,
+        getCurrencySymbol,
+        refreshExchangeRate: loadExchangeRate,
+      }}
+    >
       {children}
     </CurrencyContext.Provider>
   );
